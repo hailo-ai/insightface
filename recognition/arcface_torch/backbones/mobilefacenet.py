@@ -4,7 +4,7 @@ Original author cavalleria
 '''
 
 import torch.nn as nn
-from torch.nn import Linear, Conv2d, BatchNorm1d, BatchNorm2d, PReLU, Sequential, Module
+from torch.nn import Linear, Conv2d, BatchNorm1d, BatchNorm2d, ReLU, Sequential, Module
 import torch
 
 
@@ -19,7 +19,7 @@ class ConvBlock(Module):
         self.layers = nn.Sequential(
             Conv2d(in_c, out_c, kernel, groups=groups, stride=stride, padding=padding, bias=False),
             BatchNorm2d(num_features=out_c),
-            PReLU(num_parameters=out_c)
+            ReLU()
         )
 
     def forward(self, x):
@@ -142,6 +142,7 @@ class MobileFaceNet(Module):
 
 def get_mbf(fp16, num_features, blocks=(1, 4, 6, 2), scale=2):
     return MobileFaceNet(fp16, num_features, blocks, scale=scale)
+
 
 def get_mbf_large(fp16, num_features, blocks=(2, 8, 12, 4), scale=4):
     return MobileFaceNet(fp16, num_features, blocks, scale=scale)
