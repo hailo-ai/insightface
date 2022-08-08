@@ -5,6 +5,7 @@ from torch.utils.checkpoint import checkpoint
 __all__ = ['iresnet18', 'iresnet34', 'iresnet50', 'iresnet100', 'iresnet200']
 using_ckpt = False
 
+
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
     """3x3 convolution with padding"""
     return nn.Conv2d(in_planes,
@@ -28,6 +29,7 @@ def conv1x1(in_planes, out_planes, stride=1):
 
 class IBasicBlock(nn.Module):
     expansion = 1
+
     def __init__(self, inplanes, planes, stride=1, downsample=None,
                  groups=1, base_width=64, dilation=1):
         super(IBasicBlock, self).__init__()
@@ -38,7 +40,7 @@ class IBasicBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(inplanes, eps=1e-05,)
         self.conv1 = conv3x3(inplanes, planes)
         self.bn2 = nn.BatchNorm2d(planes, eps=1e-05,)
-        self.prelu = nn.PReLU(planes)
+        self.relu = nn.ReLU(planes)
         self.conv2 = conv3x3(planes, planes, stride)
         self.bn3 = nn.BatchNorm2d(planes, eps=1e-05,)
         self.downsample = downsample
@@ -49,13 +51,13 @@ class IBasicBlock(nn.Module):
         out = self.bn1(x)
         out = self.conv1(out)
         out = self.bn2(out)
-        out = self.prelu(out)
+        out = self.relu(out)
         out = self.conv2(out)
         out = self.bn3(out)
         if self.downsample is not None:
             identity = self.downsample(x)
         out += identity
-        return out        
+        return out
 
     def forward(self, x):
         if self.training and using_ckpt:
@@ -66,6 +68,7 @@ class IBasicBlock(nn.Module):
 
 class IResNet(nn.Module):
     fc_scale = 7 * 7
+
     def __init__(self,
                  block, layers, dropout=0, num_features=512, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None, fp16=False):
@@ -83,7 +86,7 @@ class IResNet(nn.Module):
         self.base_width = width_per_group
         self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.inplanes, eps=1e-05)
-        self.prelu = nn.PReLU(self.inplanes)
+        self.relu = nn.ReLU()
         self.layer1 = self._make_layer(block, 64, layers[0], stride=2)
         self.layer2 = self._make_layer(block,
                                        128,
@@ -149,7 +152,7 @@ class IResNet(nn.Module):
         with torch.cuda.amp.autocast(self.fp16):
             x = self.conv1(x)
             x = self.bn1(x)
-            x = self.prelu(x)
+            x = self.relu(x)
             x = self.layer1(x)
             x = self.layer2(x)
             x = self.layer3(x)
